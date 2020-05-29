@@ -1,0 +1,1 @@
+"./Source/ST7735.obj" "./Source/adc.obj" "./Source/display.obj" "./Source/fifo.obj" "./Source/helper_fkt.obj" "./Source/main.obj" "./Source/timer.obj" "./Source/tm4c123gh6pm_startup_ccs.obj" "./Source/uart.obj" "/opt/tivaware/driverlib/ccs/Debug/driverlib.lib" "../tm4c123gh6pm.cmd" -llibc.a 
