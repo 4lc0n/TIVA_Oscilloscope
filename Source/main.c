@@ -6,6 +6,7 @@
  * Pin configuration:
  * Display:
  *
+ *  --SS0: Communication with TFT Display
  *  GND -> GND
  *  VCC -> 3V3
  *  SCK -> PA2
@@ -16,11 +17,31 @@
  *  LEDA-> 3V3
  *
  *
- *  TODO: - Timer Interrupt to start conversion
- *  TODO: - solid FIFO buffer for pre-buffering and post-buffering
+ *  --ADC0, SS0
+ *  ADC_CHANNEL_10: ADCin -> PB4
+ *      Interrupt Priority: 0
+ *  ADC_Trigger_Detected -> PB1
+ *      Interrupt Priority: 1
+ *  ADC_Trigger_Voltage ->
+ *
+ *  --Rotary encoder
+ *  A -> PD1
+ *  B -> PD2
+ *  Button -> PD3
+ *      Interrupt Priority: 3
+ *
+ *  On-Board Button for manual starting record
+ *  Left Button -> PF0
+ *
+ *  TIMER0A: Trigger for ADC
+ *
+ *  Systick on 10ms Timebase (sys_time)
+ *
+ *
+ *
  *  TODO: - Interrupt driven menu
  *  TODO: - Graph plotting with interaction
- *  TODO: -
+ *  TODO: - copy data from volatile buffer in processing buffer, use it for drawing, calculations etc
  *
  */
 
@@ -44,7 +65,7 @@
 #include "driverlib/ssi.h"
 #include "driverlib/adc.h"
 #include "driverlib/interrupt.h"
-
+#include "driverlib/systick.h"
 
 #include "ST7735.h"
 
@@ -54,34 +75,49 @@
 #include "timer.h"
 #include "main.h"
 #include "display.h"
+#include "uart.h"
+#include "ui.h"
+#include "dsp.h"
 
 
 //global variables -> in bss
-    volatile struct Buffer preBuffer = {{0}, 0, 0};
-    volatile struct Buffer postBuffer = {{0}, 0, 0};
 
+    volatile struct Buffer preBuffer = {{0}, 0, 0};     //prebuffer für Speicherung bevor triggerspannung erreicht wurde //aktuell 512 Byte
 
-    volatile enum status triggerstatus= IDLE;
-    volatile uint8_t trigger_voltage = 112;
-    volatile enum edge trigger_edge = RISING;
-    volatile uint16_t prebuffer_filling = 0;
+    volatile struct Buffer postBuffer = {{0}, 0, 0};    //postbuffer für nach triggerung  //aktuell 512 Byte
 
-    volatile uint16_t trigger_frequency = 1000;
-    volatile uint16_t samples_per_division = 100;
+    uint8_t processing_buffer[1024] = {0};              //puffer für darstellung, signalverarbeitung, nachbereitung, fft etc...
 
-    volatile enum display_variant display_method = AVG;
-    //currently has no effect
-    volatile enum interpolation_variant interpolationmethod = LINEAR;
+    volatile enum status triggerstatus= IDLE;           //state variable für aktuellen status (wird in SIR aktualisiert)
+    volatile uint8_t trigger_voltage = 112;             //triggerspannung (als 8bit adc wert)
+    volatile enum edge trigger_edge = RISING;           //trigger-edge (RISING, FALLING, ANY)
+    volatile uint32_t prebuffer_filling = 0;            //für ISR, um zuerst prebuffer zu füllen, dann erst triggerung erlauben
+
+    volatile uint32_t trigger_frequency = 30000;        //trigger / timer frequenz, sollte 100.000 nicht überschreiten (isr-zeiten)
+    uint32_t available_frequencies[11] = {100, 500, 1000, 5000, 10000, 20000, 30000, 100000, 200000, 500000, 1000000};
+    volatile uint32_t samples_per_division = 100;       //rechnierischer wert für display-fkt
+
+    volatile enum display_variant display_method = PP;  //für darstellung (avg wird immer dargestellt, bei pp schwach dargestellte maximawerte
+    volatile enum interpolation_variant interpolationmethod = DOT; //hat aktuell keinen effekt (LINEAR, SINC, DOT)
+
+    volatile uint32_t sys_time = 0;                     //für systick, inc alle 10ms
 
 
 int main(void){
 
     ROM_SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);   //run at 80MHz
-    ROM_FPUEnable();
+    ROM_FPUEnable();                                                                          //enable Floating Point Unit
     ROM_FPULazyStackingEnable();
 
-    //aber kann hier vom Interrupt aus zugegriffen werden? :O
-    //bei global definiert kann man mitm Debugger nicht beobachten...
+    SysCtlDelay(300000);
+
+    //initialize Systick Timer for software debouncing of rotary encoder
+    uint32_t ui32SysClock = SysCtlClockGet();
+    SysTickPeriodSet(4e6 / 100);        //interrupt every 10 ms
+
+
+    SysTickIntEnable();
+    SysTickEnable();
 
 
     //initialize uart;
@@ -116,9 +152,9 @@ int main(void){
     while(!ROM_SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF))
     {
     }
-    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3);
 
-
+    ui_init();
 
     uart_put_s("SETUP FINISHED\n\n\rsetting up for first conversion\n\r");
 
@@ -126,44 +162,40 @@ int main(void){
 
 
 
-    ST7735_PlotClear(0 , 4096);
+
     IntMasterEnable();
 
     //start a single conversion from signal generator
 
-    preBuffer.read = 0;
-    preBuffer.write = 0;
-
-    postBuffer.read = 0;
-    postBuffer.write = 0;
-
-    triggerstatus = IDLE;
-
-    timer_set_frequency(1000);
-    timer_activate();
-
-    display_frame();
-
-    while(triggerstatus != IDLE){
-        SysCtlDelay(300000);
-        display_update_frame();
-    }
-
-
-
-
-    display_chart();
 
 
     while(1){
-        //to start trigger:
-        //prebuffer_filling to zero
-        //triggerstatus to PREBUFFERING
-        //activate timer
 
-        SysCtlDelay(3000000);
+       adc_prepare();
+
+       timer_set_frequency(trigger_frequency);
+       timer_activate();
+
+
+
+       while(triggerstatus != IDLE){
+           SysCtlDelay(300000);
+           display_update_frame();
+       }
+
+       get_data();
+
+       display_frame();
+       display_chart();
+       while(ui_update() || GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_0)){
+           SysCtlDelay(3000000);
+       }
+
     }
     return 0;
 }
 
 
+void SysTickIntHandler(void){
+    sys_time++;
+}

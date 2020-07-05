@@ -20,15 +20,18 @@
 #include "helper_fkt.h"
 #include "fifo.h"
 
+#include "uart.h"
 #include "ST7735.h"
 
 extern volatile enum status triggerstatus;
 extern volatile enum edge trigger_edge;
 extern volatile uint8_t trigger_voltage;
-extern volatile uint16_t trigger_frequency ;
-extern volatile uint16_t samples_per_division ;
+extern volatile uint32_t trigger_frequency ;
+extern volatile uint32_t samples_per_division ;
 extern volatile struct Buffer preBuffer;
 extern volatile struct Buffer postBuffer;
+extern uint8_t processing_buffer[1024];
+
 extern volatile enum display_variant display_method;
 //currently has no effect
 extern volatile enum interpolation_variant interpolationmethod;
@@ -62,7 +65,8 @@ void display_frame(){
     //write horizontal and vertical dimensions
     //ms / div
     temp = 0;
-    ftoa((samples_per_division*1.0) / trigger_frequency * 1000, buf, 1);
+    float ftemp = (samples_per_division*1.0) / (trigger_frequency * 1.0) * 1000.0;
+    ftoa(ftemp, buf, 1);
     while(buf[temp] != 0){
         temp++;
     }
@@ -88,7 +92,7 @@ void display_frame(){
         ST7735_DrawString(15, 0, "IDLE", ST7735_WHITE);
         break;
     case PREBUFFERING:
-        ST7735_DrawString(15, 0, "PRE", ST7735_WHITE);
+        ST7735_DrawString(15, 0, "PRE ", ST7735_WHITE);
         break;
     case POSTBUFFERING:
         ST7735_DrawString(15, 0, "POST", ST7735_WHITE);
@@ -121,18 +125,13 @@ void display_chart()
         //get samples for this pixel
         uint8_t temp, temp2;
         for(temp = 0; temp <samples_to_use; temp++){
-            if(used_samples >= 512){
-                temp2 = BufferOut(&preBuffer, &raw[temp]);
-                if(!temp2){
-                    //buffer read failed!
-                }
-            }
-            else{
-                temp2 = BufferOut(&postBuffer, &raw[temp]);
-            }
 
 
+            raw[temp] = processing_buffer[used_samples];
 
+
+//            uart_put_uint(raw[temp]);
+//            uart_put_s("\r\n");
 
             used_samples++;
         }
@@ -141,14 +140,14 @@ void display_chart()
             if(temp == 0){
                 tpeak = lpeak = raw[temp];
             }
-            if(raw[temp] > tpeak)tpeak = raw[temp];
-            if(raw[temp] < lpeak)lpeak = raw[temp];
+            if(raw[temp] >= tpeak)tpeak = raw[temp];
+            if(raw[temp] <= lpeak)lpeak = raw[temp];
         }
         avg = lround((avg / (samples_to_use * 1.0)))%256;
 
         //display a fainth trace of the max and min around it
         if(display_method == PP){
-            ST7735_DrawFastVLine(current_pix + _offset_x + 1, 112 - (uint8_t)(tpeak * 112 /256) + _offset_y, tpeak - lpeak, ST7735_Color565(0, 100, 100));
+            ST7735_DrawFastVLine(current_pix + _offset_x + 1, 112 - (uint8_t)(tpeak * 112 /256) + _offset_y, (tpeak - lpeak)*112/256, ST7735_Color565(0, 100, 100));
         }
         ST7735_DrawPixel(current_pix + _offset_x + 1, 112 - (uint8_t)(avg * 112.0 / 256) + _offset_y, ST7735_Color565(0, 255, 255));
 

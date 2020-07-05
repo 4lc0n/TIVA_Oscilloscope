@@ -110,6 +110,11 @@ void ST7735_DrawChar(int16_t x, int16_t y, char c, int16_t textColor, int16_t bg
 
 uint32_t ST7735_DrawString(uint16_t x, uint16_t y, char *pt, int16_t textColor);
 
+void ST7735_SetCursor(uint32_t newX, uint32_t newY);
+
+void ST7735_OutUDec(uint32_t n);
+
+
 
 //********ST7735_OutString*****************
 // Print a string of characters to the ST7735 LCD.

@@ -2,7 +2,7 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-CG_TOOL_ROOT := /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS
+CG_TOOL_ROOT := /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS
 
 GEN_OPTS__FLAG := 
 GEN_CMDS__FLAG := 
@@ -11,12 +11,14 @@ ORDERED_OBJS += \
 "./Source/ST7735.obj" \
 "./Source/adc.obj" \
 "./Source/display.obj" \
+"./Source/dsp.obj" \
 "./Source/fifo.obj" \
 "./Source/helper_fkt.obj" \
 "./Source/main.obj" \
 "./Source/timer.obj" \
 "./Source/tm4c123gh6pm_startup_ccs.obj" \
 "./Source/uart.obj" \
+"./Source/ui.obj" \
 "/opt/tivaware/driverlib/ccs/Debug/driverlib.lib" \
 "../tm4c123gh6pm.cmd" \
 $(GEN_CMDS__FLAG) \
@@ -149,22 +151,22 @@ all: $(OBJS) $(CMD_SRCS) $(LIB_SRCS) $(GEN_CMDS)
 Oszilloscope_project.out: $(OBJS) $(CMD_SRCS) $(LIB_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: ARM Linker'
-	"/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"Oszilloscope_project.map" --heap_size=0 --stack_size=2048 -i"/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/lib" -i"/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="Oszilloscope_project_linkInfo.xml" --rom_model -o "Oszilloscope_project.out" $(ORDERED_OBJS)
+	"/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/bin/armcl" -mv7M4 --code_state=16 --float_support=FPv4SPD16 -me --define=ccs="ccs" --define=PART_TM4C123GH6PM -g --gcc --diag_warning=225 --diag_wrap=off --display_error_number --abi=eabi -z -m"Oszilloscope_project.map" --heap_size=0 --stack_size=2048 -i"/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/lib" -i"/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include" --reread_libs --diag_wrap=off --display_error_number --warn_sections --xml_link_info="Oszilloscope_project_linkInfo.xml" --rom_model -o "Oszilloscope_project.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
 Oszilloscope_project.hex: $(EXE_OUTPUTS)
 	@echo 'Building files: $(strip $(EXE_OUTPUTS__QUOTED))'
 	@echo 'Invoking: ARM Hex Utility'
-	"/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/bin/armhex"  -o "Oszilloscope_project.hex" $(EXE_OUTPUTS__QUOTED)
+	"/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/bin/armhex"  -o "Oszilloscope_project.hex" $(EXE_OUTPUTS__QUOTED)
 	@echo 'Finished building: $(strip $(EXE_OUTPUTS__QUOTED))'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "Source/ST7735.obj" "Source/adc.obj" "Source/display.obj" "Source/fifo.obj" "Source/helper_fkt.obj" "Source/main.obj" "Source/timer.obj" "Source/tm4c123gh6pm_startup_ccs.obj" "Source/uart.obj" 
-	-$(RM) "Source/ST7735.d" "Source/adc.d" "Source/display.d" "Source/fifo.d" "Source/helper_fkt.d" "Source/main.d" "Source/timer.d" "Source/tm4c123gh6pm_startup_ccs.d" "Source/uart.d" 
+	-$(RM) "Source/ST7735.obj" "Source/adc.obj" "Source/display.obj" "Source/dsp.obj" "Source/fifo.obj" "Source/helper_fkt.obj" "Source/main.obj" "Source/timer.obj" "Source/tm4c123gh6pm_startup_ccs.obj" "Source/uart.obj" "Source/ui.obj" 
+	-$(RM) "Source/ST7735.d" "Source/adc.d" "Source/display.d" "Source/dsp.d" "Source/fifo.d" "Source/helper_fkt.d" "Source/main.d" "Source/timer.d" "Source/tm4c123gh6pm_startup_ccs.d" "Source/uart.d" "Source/ui.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
