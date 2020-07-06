@@ -9,7 +9,7 @@
 #define ADC_H_
 
 
-
+//initialize of pins and Interrupts as well as µDMA in Ping Pong Mode
 void adc_init();
 
 void adc_prepare();
@@ -18,5 +18,8 @@ void adc_prepare();
 
 void ADC0IntHandler(void);
 void GPIOBIntHandler(void);
+
+void uDMA_config_primary();
+void uDMA_config_secondary();
 
 #endif /* ADC_H_ */

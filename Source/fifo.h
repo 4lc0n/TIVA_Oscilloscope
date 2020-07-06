@@ -44,7 +44,7 @@ uint8_t BufferIn(struct Buffer *b, uint8_t byte);
 //    BUFFER_FAIL     nie
 //    BUFFER_SUCCESS  das Byte wurde gespeichert
 //
-uint8_t BufferOverwriteIn(struct Buffer *b, uint8_t byte);
+void BufferOverwriteIn(struct Buffer *b, uint8_t byte);
 
 //
 // Holt 1 Byte aus dem Ringbuffer, sofern mindestens eines abholbereit ist

@@ -17,15 +17,20 @@
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "inc/hw_gpio.h"
+#include "inc/hw_adc.h"
+#include "inc/hw_udma.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 #include "driverlib/rom.h"
 #include "driverlib/adc.h"
 #include "driverlib/interrupt.h"
+#include "driverlib/udma.h"
 
 #include "fifo.h"
 #include "main.h"
 #include "timer.h"
+
+#define DMA_BUFFER_SIZE 128
 
 
 extern struct Buffer preBuffer;
@@ -36,28 +41,114 @@ extern volatile uint8_t trigger_voltage;
 extern volatile uint16_t prebuffer_filling;
 
 
+
+#pragma DATA_ALIGN(DMA_Control_Table,1024)
+uint8_t DMA_Control_Table[1024] = {0};
+
+//buffer for µDMA
+uint16_t BufferA [DMA_BUFFER_SIZE], BufferB[DMA_BUFFER_SIZE];
+
+
+enum BUFFERSTATUS
+                  { EMPTY,
+                    FILLING,
+                    FULL
+                  };
+volatile enum BUFFERSTATUS Bufferstatus[2];
+
 void adc_init(){
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);                                         //enable ADC clock
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);                                        //enable PORTB
-
+    ROM_SysCtlPeripheralEnable( SYSCTL_PERIPH_UDMA);
 
 
     ROM_GPIOPinTypeADC(GPIO_PORTB_BASE, GPIO_PIN_4);
 
+    //ADC and µDMA configuration
+    //disable hardware oversampling
+    ADCHardwareOversampleConfigure(ADC0_BASE, 0);
 
-    ROM_ADCHardwareOversampleConfigure(ADC0_BASE, 4);
-                                                                                        //changed sequencer from 1 to 0 -> 8 Byte FIFO!
-    ROM_ADCSequenceConfigure(ADC0_BASE, 0, ADC_TRIGGER_TIMER, 0);                       //enable adc0 with sequence 1 and processor trigger, highest priority
+
+    //disable SS for configuration
+    ADCSequenceDisable(ADC0_BASE, 0);
+
+    //configure SS
+    ADCSequenceConfigure(ADC0_BASE, 0, ADC_TRIGGER_TIMER, 0);
+
+    //Assign Pins to sequencer
+    ADCSequenceStepConfigure(ADC0_BASE, 0, 0, ADC_CTL_CH10|ADC_CTL_IE|ADC_CTL_END);
+
+    //enable sequencer
+    ADCSequenceEnable(ADC0_BASE, 0);
+
+    //activate uDMA and assign table to it
+    uDMAEnable();
+    uDMAControlBaseSet(DMA_Control_Table);
 
 
-    ROM_ADCSequenceStepConfigure(ADC0_BASE,0,0,ADC_CTL_CH10|ADC_CTL_IE|ADC_CTL_END);     //     //configure to sample ADC Channel 10 and end conversion (interrupt when fifo is half full (4 Bytes)
+    ADCSequenceDMAEnable(ADC0_BASE, 0);
 
-    ROM_ADCIntEnable(ADC0_BASE, 0);                                                         //enable Interrupt to be sent to NVIC
+    uDMAChannelAttributeDisable(UDMA_CHANNEL_ADC0, UDMA_ATTR_ALTSELECT | UDMA_ATTR_HIGH_PRIORITY | UDMA_ATTR_REQMASK);
+
+    uDMAChannelAttributeEnable(UDMA_CHANNEL_ADC0, UDMA_ATTR_USEBURST);
+
+    uDMAChannelControlSet(UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_DST_INC_16 | UDMA_ARB_1);
+    uDMAChannelControlSet(UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT, UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_DST_INC_16 | UDMA_ARB_1);
+
+    uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_MODE_PINGPONG, (void *)(ADC0_BASE + ADC_O_SSFIFO0), &BufferA, DMA_BUFFER_SIZE);
+    uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT, UDMA_MODE_PINGPONG, (void *)(ADC0_BASE + ADC_O_SSFIFO0), &BufferB, DMA_BUFFER_SIZE);
 
     IntEnable(INT_ADC0SS0);
     IntPrioritySet(INT_ADC0SS0, 0);
+    ADCIntEnableEx(ADC0_BASE, ADC_INT_DMA_SS0); // Enables ADC interrupt source due to DMA on ADC sample sequence 0
+    uDMAChannelEnable(UDMA_CHANNEL_ADC0); // Enables DMA channel so it can perform transfers
 
-    ROM_ADCSequenceEnable(ADC0_BASE, 0);                                                    //enable sequencer 1
+
+//    ROM_ADCSequenceDisable(ADC0_BASE, 0);
+//                                                                                        //changed sequencer from 1 to 0 -> 8 Byte FIFO!
+//    ROM_ADCSequenceConfigure(ADC0_BASE, 0, ADC_TRIGGER_TIMER, 0);                       //enable adc0 with sequence 1 and processor trigger, highest priority
+//    ROM_ADCSequenceStepConfigure(ADC0_BASE,0,0,ADC_CTL_CH10|ADC_CTL_IE|ADC_CTL_END);     //     //configure to sample ADC Channel 10 and end conversion (interrupt when fifo is half full (4 Bytes)
+//
+//    ROM_ADCIntClear(ADC0_BASE, 0);
+//    ROM_ADCIntEnable(ADC0_BASE, 0);
+////    ADCSequenceDMAEnable(ADC0_BASE, 0);
+//
+//
+////    ADCIntEnableEx(ADC0_BASE, ADC_INT_DMA_SS0);                                                         //enable Interrupt to be sent to NVIC
+//
+//    ADCSequenceEnable(ADC0_BASE, 0);
+//
+//    IntPrioritySet(INT_ADC0SS0, 0);
+//    IntEnable(INT_ADC0SS0);
+
+//    //configure µDMA for faster sampling rate
+//    ROM_SysCtlPeripheralEnable( SYSCTL_PERIPH_UDMA);
+//    while(!ROM_SysCtlPeripheralReady(SYSCTL_PERIPH_UDMA));
+//    uDMAEnable();
+//
+//    uDMAControlBaseSet(DMA_Control_Table);
+//
+//    ROM_ADCSequenceEnable(ADC0_BASE, 0);                                                    //enable sequencer 1
+//
+//    // Put the attributes in a known state.  These should already be disabled by default.
+//    uDMAChannelAttributeDisable( UDMA_CHANNEL_ADC0, UDMA_ATTR_ALTSELECT |UDMA_ATTR_USEBURST | UDMA_ATTR_HIGH_PRIORITY | UDMA_ATTR_REQMASK );
+//    // Set the USEBURST attribute. This is somewhat more efficient bus usage than the default which
+//    // allows single or burst transfers.
+//    uDMAChannelAttributeEnable( UDMA_CHANNEL_ADC0, UDMA_ATTR_USEBURST );
+//
+//    uDMAChannelControlSet( UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_ARB_1 | UDMA_DST_INC_16 );
+//
+//    uDMAChannelControlSet( UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT, UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_ARB_1 | UDMA_DST_INC_16 );
+//
+////      uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_MODE_PINGPONG, (void *) (ADC0_BASE + ADC_O_SSFIFO0), BufferA, 64);
+//    uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_MODE_PINGPONG, (void *) (ADC0_SSFIFO0_R), &BufferA, 64 ); //ADC0_SSFIFO0_R
+//
+//    uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT, UDMA_MODE_PINGPONG, (void *) (ADC0_SSFIFO0_R), &BufferB, 64 );
+//
+//
+//    ROM_uDMAChannelEnable(UDMA_CHANNEL_ADC0);
+
+
 
 
     //configure trigger input pin with pin change interrupt
@@ -87,7 +178,6 @@ void adc_init(){
 
     //IntEnable(INT_GPIOB);     //start with prepare
     IntPrioritySet(INT_GPIOB, 1);
-
 }
 
 void adc_prepare(){
@@ -100,125 +190,106 @@ void adc_prepare(){
     triggerstatus = IDLE;
     prebuffer_filling = 0;
     IntEnable(INT_GPIOB);
+    uDMAChannelAttributeDisable(UDMA_CHANNEL_ADC0, UDMA_ATTR_ALTSELECT | UDMA_ATTR_HIGH_PRIORITY | UDMA_ATTR_REQMASK);
+
+    uDMAChannelAttributeEnable(UDMA_CHANNEL_ADC0, UDMA_ATTR_USEBURST);
+
+    uDMAChannelControlSet(UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_DST_INC_16 | UDMA_ARB_1);
+    uDMAChannelControlSet(UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT, UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_DST_INC_16 | UDMA_ARB_1);
+
+    uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_MODE_PINGPONG, (void *)(ADC0_BASE + ADC_O_SSFIFO0), &BufferA, DMA_BUFFER_SIZE);
+    uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT, UDMA_MODE_PINGPONG, (void *)(ADC0_BASE + ADC_O_SSFIFO0), &BufferB, DMA_BUFFER_SIZE);
+    uDMAChannelEnable(UDMA_CHANNEL_ADC0); // Enables DMA channel so it can perform transfers
+    Bufferstatus[0] = FILLING;
+    Bufferstatus[1] = EMPTY;
 }
 
 
 void ADC0IntHandler(void){
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
 
-//
-//    static uint8_t previous = 0;
-//    ADCIntClear(ADC0_BASE, 1);
-//
+
+
+
+    uint32_t ui32_mode;
+    ui32_mode = ROM_uDMAChannelModeGet(UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT);
+    if( ui32_mode == UDMA_MODE_STOP&& Bufferstatus[0] == FILLING){
+        uDMA_config_primary();
+        Bufferstatus[0] = FULL;
+        Bufferstatus[1] = FILLING;
+        if(triggerstatus == PREBUFFERING){
+            for(ui32_mode = 0; ui32_mode < DMA_BUFFER_SIZE; ui32_mode++){
+
+               prebuffer_filling++;
+               BufferOverwriteIn(&preBuffer, (uint8_t)(BufferA[ui32_mode]>>4));
+            }
+        }
+        else{
+            for(ui32_mode = 0; ui32_mode < DMA_BUFFER_SIZE; ui32_mode++){
+               if(!BufferIn(&postBuffer, (uint8_t)(BufferA[ui32_mode]>>4))){
+                   triggerstatus = IDLE;
+                   timer_deactivate();
+                   ui32_mode = DMA_BUFFER_SIZE;
+                   uDMAChannelDisable(UDMA_CHANNEL_ADC0);
+               }
+            }
+        }
+    }
+    ui32_mode = ROM_uDMAChannelModeGet(UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT);
+    if(ui32_mode == UDMA_MODE_STOP && Bufferstatus[1] == FILLING){
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
+        uDMA_config_secondary();
+        Bufferstatus[1] = FULL;
+        Bufferstatus[0] = FILLING;
+        if(triggerstatus == PREBUFFERING){
+            for(ui32_mode = 0; ui32_mode < DMA_BUFFER_SIZE; ui32_mode++){
+
+               prebuffer_filling++;
+               BufferOverwriteIn(&preBuffer, (uint8_t)(BufferB[ui32_mode]>>4));
+            }
+        }
+        else{
+            for(ui32_mode = 0; ui32_mode < DMA_BUFFER_SIZE; ui32_mode++){
+               if(!BufferIn(&postBuffer, (uint8_t)(BufferB[ui32_mode]>>4))){
+                   triggerstatus = IDLE;
+                   timer_deactivate();
+                   ui32_mode = DMA_BUFFER_SIZE;
+                   uDMAChannelDisable(UDMA_CHANNEL_ADC0);
+               }
+            }
+        }
+    }
+
+    ADCIntClear(ADC0_BASE, 0);
+
+
 //    uint32_t ui32ADC0Raw = 0;
 //    //uint32_t ui32ADCAvg = 0;
 //    uint8_t ui8data;
 //    //get value from buffer:
-//    ROM_ADCSequenceDataGet(ADC0_BASE, 1, &ui32ADC0Raw);
+//    ROM_ADCSequenceDataGet(ADC0_BASE, 0, &ui32ADC0Raw);
 //
 //
 //    ui8data = (uint8_t)(ui32ADC0Raw >>4);
 //
 //
 //    // if prebuffer not full: fill prebuffer
-//    if(prebuffer_filling < BUFFER_SIZE){
+//    if(triggerstatus == PREBUFFERING){
+//       prebuffer_filling++;
 //
-//        BufferOverwriteIn(&preBuffer, ui8data);
-//        triggerstatus = PREBUFFERING;
-//        prebuffer_filling++;
-//        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
+//
+//       GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
+//       BufferOverwriteIn(&preBuffer, ui8data);
 //    }
 //    else{
-//        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
-//        //if buffer full, but still prebuffering: here comes the trigger!
-//        if(triggerstatus == PREBUFFERING){
-//            if(trigger_edge == RISING){
+//       GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
 //
-//                //if previous data < triggervoltage and it now has risen above -> prevents to trigger if buffering starts with a higher voltage
-//                if(ui8data > trigger_voltage && previous < trigger_voltage){
-//                    triggerstatus = POSTBUFFERING;
-//                    BufferIn(&postBuffer, ui8data);
-//
-//                    //for debug timing purpose:
-//
-//
-//                }
-//                else{
-//                    BufferOverwriteIn(&preBuffer, ui8data);
-//                }
-//            }
-//            //trigger_edgt: falling
-//            else if(trigger_edge == FALLING){
-//                if(ui8data < trigger_voltage && previous > trigger_voltage){
-//                    triggerstatus = POSTBUFFERING;
-//                    BufferIn(&postBuffer, ui8data);
-//                }
-//                else{
-//                    BufferOverwriteIn(&preBuffer, ui8data);
-//                }
-//            }
-//            //trigger_edge: any
-//            else{
-//               if((ui8data < trigger_voltage && previous > trigger_voltage) ||(ui8data > trigger_voltage && previous < trigger_voltage) ){
-//                   triggerstatus = POSTBUFFERING;
-//                   BufferIn(&postBuffer, ui8data);
-//               }
-//               else{
-//                   BufferOverwriteIn(&preBuffer, ui8data);
-//              }
-//            }
-//        }
-//
-//        // if post_buffering: simply insert into buffer
-//        else if(triggerstatus == POSTBUFFERING){
-//            if(!BufferIn(&postBuffer, ui8data)){       //buffer full: change trigger_status to idle
-//                triggerstatus = IDLE;
-//                timer_deactivate();
-//            }
-//
-//        }
+//       if(!BufferIn(&postBuffer, ui8data)){
+//           triggerstatus = IDLE;
+//           timer_deactivate();
+//       }
 //    }
-//    //safe previous measurement for triggering
-//    previous = ui8data;
-//
-//
-//
-//
-//
-//
-//    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3, 0x0);
-
-
-
-    /*hardware triggering: for faster ISR time (with potential to 1MSPS
-     *
-     */
-
-    ADCIntClear(ADC0_BASE, 0);
-
-    uint32_t ui32ADC0Raw = 0;
-    //uint32_t ui32ADCAvg = 0;
-    uint8_t ui8data;
-    //get value from buffer:
-    ROM_ADCSequenceDataGet(ADC0_BASE, 0, &ui32ADC0Raw);
-
-
-    ui8data = (uint8_t)(ui32ADC0Raw >>4);
-
-
-    // if prebuffer not full: fill prebuffer
-    if(triggerstatus == PREBUFFERING){
-       prebuffer_filling++;
-       GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
-       BufferOverwriteIn(&preBuffer, ui8data);
-    }
-    else{
-       GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
-       if(!BufferIn(&postBuffer, ui8data)){
-           triggerstatus = IDLE;
-           timer_deactivate();
-       }
-    }
-    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3, 0x0);
+    GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3, 0x00);
 
 }
 
@@ -245,6 +316,20 @@ void GPIOBIntHandler(void)
 
         }
     }
+
+
+}
+
+
+void uDMA_config_primary(){
+    uint32_t temp;
+    temp = ROM_uDMAChannelIsEnabled(UDMA_CHANNEL_ADC0);
+    ROM_uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_MODE_PINGPONG, (void *)(ADC0_BASE + ADC_O_SSFIFO0), &BufferA, DMA_BUFFER_SIZE);
+
+
+}
+void uDMA_config_secondary(){
+    ROM_uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT, UDMA_MODE_PINGPONG, (void *)(ADC0_BASE + ADC_O_SSFIFO0), &BufferB, DMA_BUFFER_SIZE);
 
 
 }

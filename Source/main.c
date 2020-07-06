@@ -37,6 +37,9 @@
  *
  *  Systick on 10ms Timebase (sys_time)
  *
+ *   µDMA doesn't work,
+ *   aber bei vorheriger version mit interrupts: adc-oversampling: 4 war drin -> max freq: 250kHz
+ *
  *
  *
  *  TODO: - Interrupt driven menu
@@ -93,7 +96,7 @@
     volatile enum edge trigger_edge = RISING;           //trigger-edge (RISING, FALLING, ANY)
     volatile uint32_t prebuffer_filling = 0;            //für ISR, um zuerst prebuffer zu füllen, dann erst triggerung erlauben
 
-    volatile uint32_t trigger_frequency = 30000;        //trigger / timer frequenz, sollte 100.000 nicht überschreiten (isr-zeiten)
+    volatile uint32_t trigger_frequency = 1000000;        //trigger / timer frequenz, sollte 100.000 nicht überschreiten (isr-zeiten)
     uint32_t available_frequencies[11] = {100, 500, 1000, 5000, 10000, 20000, 30000, 100000, 200000, 500000, 1000000};
     volatile uint32_t samples_per_division = 100;       //rechnierischer wert für display-fkt
 
@@ -153,13 +156,14 @@ int main(void){
     {
     }
     ROM_GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3);
+    ROM_GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3, 0x00);
 
     ui_init();
 
     uart_put_s("SETUP FINISHED\n\n\rsetting up for first conversion\n\r");
 
     SysCtlDelay(3000000);
-
+    display_frame();
 
 
 
@@ -179,8 +183,11 @@ int main(void){
 
 
        while(triggerstatus != IDLE){
-           SysCtlDelay(300000);
-           display_update_frame();
+           if(trigger_frequency < 100000){
+               display_update_frame();
+               SysCtlDelay(300000);
+
+           }
        }
 
        get_data();

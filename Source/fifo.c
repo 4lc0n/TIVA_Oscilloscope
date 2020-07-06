@@ -26,7 +26,7 @@ uint8_t BufferIn(struct Buffer *b, uint8_t byte)
 }
 
 
-uint8_t BufferOverwriteIn(struct Buffer *b, uint8_t byte)
+void BufferOverwriteIn(struct Buffer *b, uint8_t byte)
 {
   uint16_t next = ((b->write + 1) & BUFFER_MASK);
 
@@ -37,7 +37,7 @@ uint8_t BufferOverwriteIn(struct Buffer *b, uint8_t byte)
   // buffer.data[buffer.write & BUFFER_MASK] = byte; // absolut Sicher
   b->write = next;
 
-  return BUFFER_SUCCESS;
+//  return BUFFER_SUCCESS;
 }
 
 

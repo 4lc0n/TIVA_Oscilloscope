@@ -18,11 +18,14 @@ Source/adc.obj: /opt/tivaware/inc/tm4c123gh6pm.h
 Source/adc.obj: /opt/tivaware/inc/hw_memmap.h
 Source/adc.obj: /opt/tivaware/inc/hw_types.h
 Source/adc.obj: /opt/tivaware/inc/hw_gpio.h
+Source/adc.obj: /opt/tivaware/inc/hw_adc.h
+Source/adc.obj: /opt/tivaware/inc/hw_udma.h
 Source/adc.obj: /opt/tivaware/driverlib/sysctl.h
 Source/adc.obj: /opt/tivaware/driverlib/gpio.h
 Source/adc.obj: /opt/tivaware/driverlib/rom.h
 Source/adc.obj: /opt/tivaware/driverlib/adc.h
 Source/adc.obj: /opt/tivaware/driverlib/interrupt.h
+Source/adc.obj: /opt/tivaware/driverlib/udma.h
 Source/adc.obj: ../Source/fifo.h
 Source/adc.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdlib.h
 Source/adc.obj: ../Source/main.h
@@ -51,11 +54,14 @@ Source/adc.obj: ../Source/timer.h
 /opt/tivaware/inc/hw_memmap.h: 
 /opt/tivaware/inc/hw_types.h: 
 /opt/tivaware/inc/hw_gpio.h: 
+/opt/tivaware/inc/hw_adc.h: 
+/opt/tivaware/inc/hw_udma.h: 
 /opt/tivaware/driverlib/sysctl.h: 
 /opt/tivaware/driverlib/gpio.h: 
 /opt/tivaware/driverlib/rom.h: 
 /opt/tivaware/driverlib/adc.h: 
 /opt/tivaware/driverlib/interrupt.h: 
+/opt/tivaware/driverlib/udma.h: 
 ../Source/fifo.h: 
 /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdlib.h: 
 ../Source/main.h: 
