@@ -30,21 +30,29 @@
  *  Button -> PD3
  *      Interrupt Priority: 3
  *
+ *  --ADC1 SS0
+ *  ADC_CHANNEL_7: Potentiometer for horizontal position -> D0
+ *
  *  On-Board Button for manual starting record
- *  Left Button -> PF0
+ *  Right Button -> PF0
  *
  *  TIMER0A: Trigger for ADC
  *
  *  Systick on 10ms Timebase (sys_time)
  *
- *   µDMA doesn't work,
- *   aber bei vorheriger version mit interrupts: adc-oversampling: 4 war drin -> max freq: 250kHz
+ *
+ *===================================================
+ *  For Compiling:
+ *  --opt_level: 2
+ *  --opt_for_speed: 4
+ *  (auf opt_level 3 und opt_for_speed 5 funktioniert adc Trigger-Funktion nicht mehr!)
  *
  *
  *
- *  TODO: - Interrupt driven menu
+ *==================================================
+ *  Done: - Semi-Interrupt driven menu: works if conversion completed
  *  TODO: - Graph plotting with interaction
- *  TODO: - copy data from volatile buffer in processing buffer, use it for drawing, calculations etc
+ *  Done: - copy data from volatile buffer in processing buffer, use it for drawing, calculations etc: processing_buffer
  *
  */
 
@@ -96,9 +104,14 @@
     volatile enum edge trigger_edge = RISING;           //trigger-edge (RISING, FALLING, ANY)
     volatile uint32_t prebuffer_filling = 0;            //für ISR, um zuerst prebuffer zu füllen, dann erst triggerung erlauben
 
-    volatile uint32_t trigger_frequency = 1000000;        //trigger / timer frequenz, sollte 100.000 nicht überschreiten (isr-zeiten)
-    uint32_t available_frequencies[11] = {100, 500, 1000, 5000, 10000, 20000, 30000, 100000, 200000, 500000, 1000000};
+    volatile uint32_t trigger_frequency = 20000;        //trigger / timer frequenz, sollte 100.000 nicht überschreiten (isr-zeiten)
+    uint32_t available_frequencies[11] = {100, 500, 1000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000};
+    bool show_measurements = true;
+    uint8_t divider = 0;
+    bool ac_coupling = false;
+
     volatile uint32_t samples_per_division = 100;       //rechnierischer wert für display-fkt
+    volatile uint16_t samples_horizontal_offset = 0;
 
     volatile enum display_variant display_method = PP;  //für darstellung (avg wird immer dargestellt, bei pp schwach dargestellte maximawerte
     volatile enum interpolation_variant interpolationmethod = DOT; //hat aktuell keinen effekt (LINEAR, SINC, DOT)
@@ -183,7 +196,7 @@ int main(void){
 
 
        while(triggerstatus != IDLE){
-           if(trigger_frequency < 100000){
+           if(trigger_frequency <= 100000){
                display_update_frame();
                SysCtlDelay(300000);
 
@@ -196,6 +209,7 @@ int main(void){
        display_chart();
        while(ui_update() || GPIOPinRead(GPIO_PORTF_BASE, GPIO_PIN_0)){
            SysCtlDelay(3000000);
+
        }
 
     }

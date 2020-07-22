@@ -39,7 +39,7 @@ extern volatile enum status triggerstatus;
 extern volatile enum edge trigger_edge;
 extern volatile uint8_t trigger_voltage;
 extern volatile uint16_t prebuffer_filling;
-
+extern volatile uint16_t samples_horizontal_offset;
 
 
 #pragma DATA_ALIGN(DMA_Control_Table,1024)
@@ -60,6 +60,12 @@ void adc_init(){
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);                                         //enable ADC clock
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);                                        //enable PORTB
     ROM_SysCtlPeripheralEnable( SYSCTL_PERIPH_UDMA);
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+
+    //set outputs for attenuator network
+
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_4 | GPIO_PIN_5|GPIO_PIN_6);
+    ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4 | GPIO_PIN_5|GPIO_PIN_6, 0x00);
 
 
     ROM_GPIOPinTypeADC(GPIO_PORTB_BASE, GPIO_PIN_4);
@@ -208,7 +214,7 @@ void adc_prepare(){
 void ADC0IntHandler(void){
     GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
 
-
+    ADCIntClear(ADC0_BASE, 0);
 
 
     uint32_t ui32_mode;
@@ -255,12 +261,13 @@ void ADC0IntHandler(void){
                    timer_deactivate();
                    ui32_mode = DMA_BUFFER_SIZE;
                    uDMAChannelDisable(UDMA_CHANNEL_ADC0);
+                   IntDisable(INT_GPIOB);
                }
             }
         }
     }
 
-    ADCIntClear(ADC0_BASE, 0);
+
 
 
 //    uint32_t ui32ADC0Raw = 0;
@@ -332,4 +339,77 @@ void uDMA_config_secondary(){
     ROM_uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT, UDMA_MODE_PINGPONG, (void *)(ADC0_BASE + ADC_O_SSFIFO0), &BufferB, DMA_BUFFER_SIZE);
 
 
+}
+
+
+
+
+bool sample_user_input()
+{
+    static uint32_t last_horizontal_offset = 0;
+    uint32_t ui32_adc_data;
+    //Prepare ADC1 for sampling potentiometer on Pin XXX
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC1);                                         //enable ADC clock
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
+
+    ROM_ADCSequenceDisable(ADC1_BASE, 0);
+    ROM_GPIOPinTypeADC(GPIO_PORTD_BASE, GPIO_PIN_0);
+
+    //enable oversampling for noise free results
+    ROM_ADCHardwareOversampleConfigure(ADC1_BASE, 64);
+
+
+    ROM_ADCSequenceConfigure(ADC1_BASE, 0, ADC_TRIGGER_PROCESSOR, 0);                       //enable adc0 with sequence 1 and processor trigger, highest priority
+    ROM_ADCSequenceStepConfigure(ADC1_BASE,0,0,ADC_CTL_CH7|ADC_CTL_IE|ADC_CTL_END);     //     //configure to sample ADC Channel 10 and end conversion (interrupt when fifo is half full (4 Bytes)
+
+    ROM_ADCSequenceEnable(ADC1_BASE, 0);
+
+    ROM_ADCIntClear(ADC1_BASE, 0);
+
+    ADCProcessorTrigger(ADC1_BASE,  0);
+    while(!ADCIntStatus(ADC1_BASE, 0, false));
+
+    ADCSequenceDataGet(ADC1_BASE, 0, &ui32_adc_data);
+
+    //make it stepped so no deadband is needed to display values near edge
+    samples_horizontal_offset = (ui32_adc_data>>2) & (0xFFC0);
+    if(last_horizontal_offset != samples_horizontal_offset){
+        last_horizontal_offset = samples_horizontal_offset;
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+void set_attenuator(uint8_t divider_setting)
+{
+    switch(divider_setting){
+    case 0:
+        ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5|GPIO_PIN_6, GPIO_PIN_6);
+        break;
+    case 1:
+        ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5|GPIO_PIN_6, GPIO_PIN_5);
+        break;
+    case 2:
+        ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5|GPIO_PIN_6, GPIO_PIN_5 | GPIO_PIN_6);
+        break;
+    default:
+        ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5|GPIO_PIN_6, 0);
+        break;
+
+
+
+    }
+
+
+}
+void set_ac_coupling(bool state)
+{
+    if(state){
+        ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_PIN_4);
+    }
+    else{
+        ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, 0);
+    }
 }

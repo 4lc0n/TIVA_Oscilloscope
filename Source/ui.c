@@ -24,11 +24,16 @@
 #include "driverlib/interrupt.h"
 
 
+
 #include "main.h"
 #include "ui.h"
 #include "timer.h"
 #include "ST7735.h"
+#include "display.h"
+#include "adc.h"
 
+
+#define MENU_ROWS 6
 
 //#define INVERT_ROTARY_ENCODER
 
@@ -39,6 +44,10 @@ extern uint32_t available_frequencies[7];
 extern volatile uint32_t trigger_frequency;
 extern uint32_t sys_time;
 extern volatile enum edge trigger_edge;
+extern uint32_t samples_per_division;
+extern bool show_measurements;
+extern uint8_t divider;
+extern bool ac_coupling;
 
 uint8_t menu_level = 0; //0: menu invisible, 1: settings, 2: subsettings (not implemented yet)
 uint8_t menu_row = 0;   //see switch satement
@@ -46,6 +55,8 @@ uint8_t menu_column = 0;    //0: various settings, 1: edit setting
 uint32_t menu_refresh = 0;
 
 char trig_string[3][8] = {"Rising", "Falling", "Any"};
+char bool_string[2][6] = {"false", " true"};
+char atten_string[3][4] = {"2:1", "3:1", "9:1"};
 
 
 void ui_init()
@@ -54,7 +65,7 @@ void ui_init()
 
     //enable Periphery GPIOD , even though it is enabled, rea
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
-
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
     while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOD))
     {
 
@@ -78,13 +89,14 @@ void ui_init()
     IntEnable(INT_GPIOD);
     IntPrioritySet(INT_GPIOD, 3);
 
-
-    GPIOUnlockPin(GPIO_PORTF_BASE, GPIO_PIN_0);
+    HWREG(GPIO_PORTF_BASE+GPIO_O_LOCK) = 0x4C4F434B;
+    HWREG(GPIO_PORTF_BASE+GPIO_O_CR) = GPIO_PIN_0 | GPIO_PIN_4;
+//    GPIOUnlockPin(GPIO_PORTF_BASE, GPIO_PIN_0);
     //set button PF0 as Input for manual starting conversion
-    GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_0);
+    GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_0 | GPIO_PIN_4);
 
     //enable pullup
-    GPIOPadConfigSet(GPIO_PORTF_BASE,GPIO_PIN_0 , GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
+    GPIOPadConfigSet(GPIO_PORTF_BASE,GPIO_PIN_0 | GPIO_PIN_4, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
 }
 uint8_t ui_update()
@@ -108,7 +120,7 @@ uint8_t ui_update()
             if(menu_column){    //second row: change frequency
                 static uint8_t current_frequency = 0;
                 if(rotary_count){
-                    current_frequency = (abs(current_frequency +rotary_count))%11;
+                    current_frequency = ((current_frequency +rotary_count))%11;
                     trigger_frequency = available_frequencies[current_frequency];
                 }
 
@@ -121,7 +133,7 @@ uint8_t ui_update()
                 //first row:
                 //go to next row
                 if(rotary_count){
-                    menu_row = abs((menu_row + rotary_count)) % 3;
+                    menu_row = ((menu_row + rotary_count)) % MENU_ROWS;
                 }
                 //go to setting
                 else if(button_count){
@@ -137,7 +149,7 @@ uint8_t ui_update()
             if(menu_column){    //second column: change edge
                 static uint8_t current_edge = 0;
                 if(rotary_count){
-                    current_edge = abs((current_edge + rotary_count))%3;
+                    current_edge = ((current_edge + rotary_count))%3;
                     trigger_edge = current_edge;
                 }
 
@@ -150,7 +162,33 @@ uint8_t ui_update()
                 //first column:
                 //go to next row
                 if(rotary_count){
-                    menu_row = abs((menu_row + rotary_count)) % 3;
+                    menu_row = ((menu_row + rotary_count)) % MENU_ROWS;
+                }
+                //go to setting
+                else if(button_count){
+                    menu_column = 1;
+                }
+
+            }
+            break;
+            // show measurements
+        case 2:
+            if(menu_column){    //second column: change status
+
+                if(rotary_count){
+                    show_measurements = !show_measurements;
+                                    }
+
+                else if(button_count){  //exit edit row: save changes
+
+                    menu_column= 0;
+                }
+            }
+            else{
+                //first column:
+                //go to next row
+                if(rotary_count){
+                    menu_row = ((menu_row + rotary_count)) % MENU_ROWS;
                 }
                 //go to setting
                 else if(button_count){
@@ -160,11 +198,64 @@ uint8_t ui_update()
             }
             break;
 
-        case 2:
+            //input attenuator
+        case 3:
+            if(menu_column){    //second column: change status
+
+                if(rotary_count){
+                    divider = ((divider + rotary_count))%3;
+                }
+
+                else if(button_count){  //exit edit row: save changes
+
+                    menu_column= 0;
+                    set_attenuator(divider);
+                }
+            }
+            else{
+                //first column:
+                //go to next row
+                if(rotary_count){
+                    menu_row = ((menu_row + rotary_count)) % MENU_ROWS;
+                }
+                //go to setting
+                else if(button_count){
+                    menu_column = 1;
+                }
+
+            }
+            break;
+        case 4:
+            if(menu_column){    //second column: change status
+
+                if(rotary_count){
+                    ac_coupling = !ac_coupling;
+                }
+
+                else if(button_count){  //exit edit row: save changes
+
+                    menu_column= 0;
+                    set_ac_coupling(ac_coupling);
+                }
+            }
+            else{
+                //first column:
+                //go to next row
+                if(rotary_count){
+                    menu_row = ((menu_row + rotary_count)) % MENU_ROWS;
+                }
+                //go to setting
+                else if(button_count){
+                    menu_column = 1;
+                }
+
+            }
+            break;
+        case 5:
             //back button
             //go to next row
             if(rotary_count){
-                menu_row = abs((menu_row + rotary_count)) % 3;
+                menu_row = ((menu_row + rotary_count)) % MENU_ROWS;
             }
             //close menu
             else if(button_count){
@@ -214,16 +305,57 @@ uint8_t ui_update()
         ST7735_SetCursor(12, 5);
         ST7735_OutString(" ");
         ST7735_OutString(trig_string[trigger_edge]);
-        ST7735_OutString("    ");
+        ST7735_OutString("   ");
 
         ST7735_SetCursor(6, 6);
+        ST7735_OutString(" MEASU");
+        ST7735_SetCursor(12, 6);
+        ST7735_OutString(" ");
+        ST7735_OutString(bool_string[show_measurements]);
+        ST7735_OutString("    ");
+
+        ST7735_SetCursor(6, 7);
+        ST7735_OutString(" ATTEN");
+        ST7735_SetCursor(12, 7);
+        ST7735_OutString(" ");
+        ST7735_OutString(atten_string[divider]);
+        ST7735_OutString("    ");
+
+        ST7735_SetCursor(6, 8);
+        ST7735_OutString(" ACDC");
+        ST7735_SetCursor(12, 8);
+        ST7735_OutString(" ");
+        ST7735_OutString(bool_string[ac_coupling]);
+        ST7735_OutString("    ");
+
+        ST7735_SetCursor(6, 9);
         ST7735_OutString(" BACK");
-        ST7735_SetCursor(menu_column ? 14 : 6, 4 + menu_row);
+
+        //print cursor
+        ST7735_SetCursor(menu_column ? 12 : 6, 4 + menu_row);
         ST7735_OutString(">");
 
     }
 
     else{
+
+        //if rotary_count > 0: zoom the display!
+        if(rotary_count != 0 || sample_user_input()){
+            if(rotary_count > 0 && samples_per_division > 3){
+                samples_per_division /= 2;
+            }
+            else if(rotary_count < 0){
+                samples_per_division *= 2;
+                if(samples_per_division > 100)
+                {
+                    samples_per_division = 100;
+                }
+            }
+            display_update_frame();
+            display_chart();
+        }
+
+
         rotary_count = 0;
         button_count = 0;
 

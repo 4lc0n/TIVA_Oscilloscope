@@ -19,7 +19,7 @@
 #include "main.h"
 #include "helper_fkt.h"
 #include "fifo.h"
-
+#include "dsp.h"
 #include "uart.h"
 #include "ST7735.h"
 
@@ -28,9 +28,14 @@ extern volatile enum edge trigger_edge;
 extern volatile uint8_t trigger_voltage;
 extern volatile uint32_t trigger_frequency ;
 extern volatile uint32_t samples_per_division ;
+extern volatile uint16_t samples_horizontal_offset;
 extern volatile struct Buffer preBuffer;
 extern volatile struct Buffer postBuffer;
 extern uint8_t processing_buffer[1024];
+
+extern volatile int8_t rotary_count;
+extern bool show_measurements;
+extern uint8_t divider;
 
 extern volatile enum display_variant display_method;
 //currently has no effect
@@ -47,7 +52,7 @@ uint8_t plot_height = display_height - 2*_offset_y -2;
 
 void display_frame(){
 
-    uint8_t temp = 0, temp2 = 0;
+    uint8_t temp = 0;
     char buf[15] = {0};
 
     //clear display
@@ -65,109 +70,23 @@ void display_frame(){
     //write horizontal and vertical dimensions
     //ms / div
     temp = 0;
-    float ftemp = (samples_per_division*1.0) / (trigger_frequency * 1.0) * 1000.0;
-    ftoa(ftemp, buf, 1);
-    while(buf[temp] != 0){
-        temp++;
-    }
-    strcpy(buf + temp, " ms/Div");
-    ST7735_DrawString(3, 12, buf, ST7735_WHITE);
-
-    //samples/s
-    temp = 0;
-    for(temp = 0; temp < 15; temp++){
-        buf[temp] = 0;
-    }
-    temp = 0;
-    ltoa(trigger_frequency, buf, 10);
-    while(buf[temp] != 0){
-        temp++;
-    }
-    strcpy(buf + temp, " S/sec");
-    ST7735_DrawString(3, 0, buf, ST7735_WHITE);
-
-    //current status
-    switch(triggerstatus){
-    case IDLE:
-        ST7735_DrawString(15, 0, "IDLE", ST7735_WHITE);
-        break;
-    case PREBUFFERING:
-        ST7735_DrawString(15, 0, "PRE ", ST7735_WHITE);
-        break;
-    case POSTBUFFERING:
-        ST7735_DrawString(15, 0, "POST", ST7735_WHITE);
-        break;
-    default:
-        break;
-    }
-}
-
-
-void display_chart()
-{
-    uint8_t current_pix= 0;
-    uint8_t samples_to_use = 0;
-    uint16_t used_samples = 0;
-    uint8_t raw[30] = {0};
-    uint32_t avg = 0;
-    uint8_t tpeak, lpeak;
-    //clear chart area
-    ST7735_FillRect(_offset_x +1, _offset_y-2, 140, 112, ST7735_BLACK);
-    display_draw_grid();
-    //calculate datapoints per pixel
-    float data_per_pixel = 1024 / 140.0;
-
-    //loop over every pixel
-    for(current_pix = 0; current_pix < plot_width; current_pix ++) {
-        samples_to_use = lround((current_pix+1.0) * data_per_pixel) - used_samples;
-        tpeak = lpeak = 0;
-        avg = 0;
-        //get samples for this pixel
-        uint8_t temp, temp2;
-        for(temp = 0; temp <samples_to_use; temp++){
-
-
-            raw[temp] = processing_buffer[used_samples];
-
-
-//            uart_put_uint(raw[temp]);
-//            uart_put_s("\r\n");
-
-            used_samples++;
+    if(trigger_frequency < 100000){
+        float ftemp = (samples_per_division*1.0) / (trigger_frequency * 1.0) * 1000.0;
+        ftoa(ftemp, buf, 1);
+        while(buf[temp] != 0){
+            temp++;
         }
-        for(temp = 0; temp < samples_to_use; temp++){
-            avg += raw[temp];
-            if(temp == 0){
-                tpeak = lpeak = raw[temp];
-            }
-            if(raw[temp] >= tpeak)tpeak = raw[temp];
-            if(raw[temp] <= lpeak)lpeak = raw[temp];
-        }
-        avg = lround((avg / (samples_to_use * 1.0)))%256;
-
-        //display a fainth trace of the max and min around it
-        if(display_method == PP){
-            ST7735_DrawFastVLine(current_pix + _offset_x + 1, 112 - (uint8_t)(tpeak * 112 /256) + _offset_y, (tpeak - lpeak)*112/256, ST7735_Color565(0, 100, 100));
-        }
-        ST7735_DrawPixel(current_pix + _offset_x + 1, 112 - (uint8_t)(avg * 112.0 / 256) + _offset_y, ST7735_Color565(0, 255, 255));
-
+        strcpy(buf + temp, " ms/Div");
     }
-
-}
-
-
-void display_update_frame()
-{
-    //write horizontal and vertical dimensions
-    //ms / div
-    uint8_t temp = 0;
-    char buf[15] = {0};
-    ftoa((samples_per_division*1.0) / trigger_frequency * 1000, buf, 1);
-    while(buf[temp] != 0){
-        temp++;
+    else{
+        float ftemp = (samples_per_division*1.0) / (trigger_frequency * 1.0) * 1000000.0;
+        ftoa(ftemp, buf, 1);
+        while(buf[temp] != 0){
+            temp++;
+        }
+        strcpy(buf + temp, " us/Div");
     }
-    strcpy(buf + temp, " ms/Div  ");
-    ST7735_DrawString(3, 12, buf, ST7735_WHITE);
+    ST7735_DrawString(1, 12, buf, ST7735_WHITE);
 
     //samples/s
     temp = 0;
@@ -185,13 +104,218 @@ void display_update_frame()
     //current status
     switch(triggerstatus){
     case IDLE:
-        ST7735_DrawString(15, 0, "IDLE", ST7735_WHITE);
+        ST7735_DrawString(18, 0, "IDLE", ST7735_WHITE);
         break;
     case PREBUFFERING:
-        ST7735_DrawString(15, 0, "PRE", ST7735_WHITE);
+        ST7735_DrawString(18, 0, "PRE ", ST7735_WHITE);
         break;
     case POSTBUFFERING:
-        ST7735_DrawString(15, 0, "POST", ST7735_WHITE);
+        ST7735_DrawString(18, 0, "POST", ST7735_WHITE);
+        break;
+    default:
+        break;
+    }
+}
+
+
+void display_chart()
+{
+    uint8_t current_pix= 0;
+    uint8_t samples_to_use = 0;
+    uint16_t used_samples = 0;
+    uint8_t raw[30] = {0};
+    uint32_t avg = 0;
+    uint8_t tpeak, lpeak;
+//    samples_horizontal_offset = 0;
+
+    //if rotary encoder was truned: in/decrese samples per division
+    if(rotary_count != 0){
+        if(rotary_count > 0 && samples_per_division >= 3){
+            samples_per_division /= 2;
+        }
+        else {
+            samples_per_division *= 2;
+            if(samples_per_division > 100)
+            {
+                samples_per_division = 100;
+            }
+        }
+    }
+
+    // calculate amounts of samples to display
+    uint16_t samples_to_display = samples_per_division * 10;
+
+
+    //clear chart area
+    ST7735_FillRect(_offset_x +1, _offset_y-2, 142, 112, ST7735_BLACK);
+    display_draw_grid();
+    //calculate datapoints per pixel
+    float data_per_pixel = samples_to_display / 140.0;
+
+    //loop over every pixel
+    for(current_pix = 0; current_pix < plot_width; current_pix ++) {
+        //calculate amount of samples for this pixel
+        samples_to_use = lround((current_pix+1.0) * data_per_pixel) - used_samples;
+        if(samples_to_use > 0 && used_samples + samples_horizontal_offset < 1023) // zoomed in too far
+        {
+
+
+            tpeak = lpeak = 0;
+            avg = 0;
+
+
+            //get samples for this pixel
+            uint8_t temp;
+            for(temp = 0; temp <samples_to_use; temp++){
+
+                raw[temp] = processing_buffer[used_samples + samples_horizontal_offset];
+    //            uart_put_uint(raw[temp]);
+    //            uart_put_s("\r\n");
+                used_samples++;
+
+                //by horizontal shiftng reached end
+
+            }
+
+            for(temp = 0; temp < samples_to_use; temp++){
+                avg += raw[temp];
+                if(temp == 0){
+                    tpeak = lpeak = raw[temp];
+                }
+                if(raw[temp] >= tpeak)tpeak = raw[temp];
+                if(raw[temp] <= lpeak)lpeak = raw[temp];
+
+                if(used_samples + samples_horizontal_offset > 1023)continue;
+            }
+
+            avg = lround((avg / (samples_to_use * 1.0)))%256;
+
+            //display a fainth trace of the max and min around it
+            if(display_method == PP){
+                ST7735_DrawFastVLine(current_pix + _offset_x + 1, 109 - (uint8_t)(tpeak * 112 /256) + _offset_y, (tpeak - lpeak)*112/256, ST7735_Color565(0, 100, 100));
+            }
+
+            ST7735_DrawPixel(current_pix + _offset_x + 1, 109 - (uint8_t)(avg * 112.0 / 256) + _offset_y, ST7735_Color565(0, 255, 255));
+        }
+
+    }
+
+    if(show_measurements){
+
+        uint8_t temp = 0;
+        char buf[15] = {0};
+        //print V peak-to-peak
+        temp = 0;
+        for(temp = 0; temp < 15; temp++){
+            buf[temp] = 0;
+        }
+        temp = 0;
+        float vpp = get_peak_to_peak() / 256.0;
+        switch(divider){
+        case 0:
+            vpp *= 6.6;
+            break;
+        case 1:
+            vpp *= 10.0;
+            break;
+        case 2:
+            vpp *= 30.0;
+            break;
+        default:
+            break;
+        }
+        ftoa(vpp, buf, 1);
+        while(buf[temp] != 0){
+            temp++;
+        }
+        strcpy(buf + temp, " Vpp  ");
+        ST7735_DrawString(17, 3, buf, ST7735_WHITE);
+
+        //print mean voltage
+        temp = 0;
+        for(temp = 0; temp < 15; temp++){
+            buf[temp] = 0;
+        }
+        temp = 0;
+        float v_mean = get_mean() / 128.0 - 1;
+        switch(divider){
+        case 0:
+            v_mean *= 3.3;
+            break;
+        case 1:
+            v_mean *= 5.0;
+            break;
+        case 2:
+            v_mean *=15.0;
+            break;
+        default:
+            break;
+        }
+        if(v_mean < 0){
+            buf[0] = '-';
+            v_mean *= -1;
+            ftoa(v_mean, buf+1, 2);
+        }
+        else{
+            ftoa(v_mean, buf, 2);
+        }
+        while(buf[temp] != 0){
+            temp++;
+        }
+        strcpy(buf + temp, " V  ");
+        ST7735_DrawString(17, 4, buf, ST7735_WHITE);
+    }
+
+}
+
+
+void display_update_frame()
+{
+    //write horizontal and vertical dimensions
+    //ms / div
+    uint8_t temp = 0;
+    char buf[15] = {0};
+    if(trigger_frequency < 100000){
+        float ftemp = (samples_per_division*1.0) / (trigger_frequency * 1.0) * 1000.0;
+        ftoa(ftemp, buf, 1);
+        while(buf[temp] != 0){
+            temp++;
+        }
+        strcpy(buf + temp, " ms/Div");
+    }
+    else{
+        float ftemp = (samples_per_division*1.0) / (trigger_frequency * 1.0) * 1000000.0;
+        ftoa(ftemp, buf, 1);
+        while(buf[temp] != 0){
+            temp++;
+        }
+        strcpy(buf + temp, " us/Div");
+    }
+    ST7735_DrawString(1, 12, buf, ST7735_WHITE);
+
+    //samples/s
+    temp = 0;
+    for(temp = 0; temp < 15; temp++){
+        buf[temp] = 0;
+    }
+    temp = 0;
+    ltoa(trigger_frequency, buf, 10);
+    while(buf[temp] != 0){
+        temp++;
+    }
+    strcpy(buf + temp, " S/sec  ");
+    ST7735_DrawString(3, 0, buf, ST7735_WHITE);
+
+    //current status
+    switch(triggerstatus){
+    case IDLE:
+        ST7735_DrawString(18, 0, "IDLE", ST7735_WHITE);
+        break;
+    case PREBUFFERING:
+        ST7735_DrawString(18, 0, "PRE ", ST7735_WHITE);
+        break;
+    case POSTBUFFERING:
+        ST7735_DrawString(18, 0, "POST", ST7735_WHITE);
         break;
     default:
         break;

@@ -37,7 +37,7 @@ void get_data(){
 float get_mean(){
     float mean = 0;
     uint16_t i;
-    for(i = 2*BUFFER_SIZE-1; i >= 0; i--)
+    for(i = 1023; i != 0; i--)
     {
         mean += processing_buffer[i];
     }
@@ -46,4 +46,53 @@ float get_mean(){
     return mean;
 
 
+}
+
+
+
+uint8_t get_peak_to_peak()
+{
+    //assign to a value for first data reference
+    uint8_t high = processing_buffer[0], low = processing_buffer[0];
+    uint16_t i;
+    for(i = 1023; i != 0; i--)
+    {
+       if(processing_buffer[i] > high)
+       {
+           high = processing_buffer[i];
+       }
+       if(processing_buffer[i] < low)
+       {
+           low = processing_buffer[i];
+       }
+    }
+    return high - low;
+
+}
+
+uint8_t get_highest()
+{
+    uint16_t i;
+    uint8_t high = processing_buffer[0];
+    for(i = 1023; i != 0; i--)
+        {
+           if(processing_buffer[i] > high)
+           {
+               high = processing_buffer[i];
+           }
+        }
+    return high;
+}
+uint8_t get_lowest()
+{
+    uint16_t i;
+    uint8_t low = processing_buffer[0];
+    for(i = 1023; i != 0; i--)
+        {
+           if(processing_buffer[i] < low)
+           {
+               low = processing_buffer[i];
+           }
+        }
+    return low;
 }

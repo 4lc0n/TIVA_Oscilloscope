@@ -16,4 +16,8 @@ void get_data();
 //returns the mean value of the processing buffer (as a value between 0 and 255)
 float get_mean();
 
+uint8_t get_peak_to_peak();
+uint8_t get_highest();
+uint8_t get_lowest();
+
 #endif /* SOURCE_DSP_H_ */

@@ -7,7 +7,8 @@
 
 #ifndef ADC_H_
 #define ADC_H_
-
+#include <stdbool.h>
+#include <stdint.h>
 
 //initialize of pins and Interrupts as well as µDMA in Ping Pong Mode
 void adc_init();
@@ -21,5 +22,11 @@ void GPIOBIntHandler(void);
 
 void uDMA_config_primary();
 void uDMA_config_secondary();
+
+
+bool sample_user_input();
+
+void set_attenuator(uint8_t divider_setting);
+void set_ac_coupling(bool state);
 
 #endif /* ADC_H_ */

@@ -1,23 +1,23 @@
 # FIXED
 
 Source/main.obj: ../Source/main.c
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdint.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/_ti_config.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/linkage.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/_stdint40.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/sys/stdint.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/sys/cdefs.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/sys/_types.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/machine/_types.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/machine/_stdint.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/sys/_stdint.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdbool.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdlib.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdio.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdarg.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/math.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/_defs.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/machine/_limits.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdint.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/_stdint40.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/sys/stdint.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/_ti_config.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/linkage.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/sys/cdefs.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/sys/_types.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/machine/_types.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/machine/_stdint.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/sys/_stdint.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdbool.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdlib.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdio.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdarg.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/math.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/_defs.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/machine/_limits.h
 Source/main.obj: /opt/tivaware/inc/tm4c123gh6pm.h
 Source/main.obj: /opt/tivaware/inc/hw_memmap.h
 Source/main.obj: /opt/tivaware/inc/hw_types.h
@@ -31,7 +31,7 @@ Source/main.obj: /opt/tivaware/driverlib/interrupt.h
 Source/main.obj: /opt/tivaware/driverlib/systick.h
 Source/main.obj: ../Source/ST7735.h
 Source/main.obj: ../Source/fifo.h
-Source/main.obj: /home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdlib.h
+Source/main.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdlib.h
 Source/main.obj: ../Source/adc.h
 Source/main.obj: ../Source/timer.h
 Source/main.obj: ../Source/main.h
@@ -41,23 +41,23 @@ Source/main.obj: ../Source/ui.h
 Source/main.obj: ../Source/dsp.h
 
 ../Source/main.c: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdint.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/_ti_config.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/linkage.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/_stdint40.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/sys/stdint.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/sys/cdefs.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/sys/_types.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/machine/_types.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/machine/_stdint.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/sys/_stdint.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdbool.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdlib.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdio.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdarg.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/math.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/_defs.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/machine/_limits.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdint.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/_stdint40.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/sys/stdint.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/_ti_config.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/linkage.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/sys/cdefs.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/sys/_types.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/machine/_types.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/machine/_stdint.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/sys/_stdint.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdbool.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdlib.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdio.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdarg.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/math.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/_defs.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/machine/_limits.h: 
 /opt/tivaware/inc/tm4c123gh6pm.h: 
 /opt/tivaware/inc/hw_memmap.h: 
 /opt/tivaware/inc/hw_types.h: 
@@ -71,7 +71,7 @@ Source/main.obj: ../Source/dsp.h
 /opt/tivaware/driverlib/systick.h: 
 ../Source/ST7735.h: 
 ../Source/fifo.h: 
-/home/k10l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.1.LTS/include/stdlib.h: 
+/home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdlib.h: 
 ../Source/adc.h: 
 ../Source/timer.h: 
 ../Source/main.h: 

@@ -50,7 +50,7 @@ void timer_init(){
 void timer_set_frequency(uint32_t frequency){
     if(triggerstatus == IDLE){
         uint32_t ui32Period = (SysCtlClockGet() / frequency );
-        ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, ui32Period - 1);
+        ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, ui32Period);
     }
 }
 void timer_activate(){
