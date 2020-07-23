@@ -114,6 +114,7 @@ void ST7735_SetCursor(uint32_t newX, uint32_t newY);
 
 void ST7735_OutUDec(uint32_t n);
 
+void ST7735_Drawline(uint16_t xa, uint16_t ya, uint16_t xe, uint16_t ye, uint16_t color);
 
 
 //********ST7735_OutString*****************

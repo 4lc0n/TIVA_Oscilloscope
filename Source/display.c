@@ -48,7 +48,8 @@ const uint16_t display_width = 160, display_height = 128;
 const uint8_t _offset_x = 8, _offset_y = 9;
 uint8_t plot_width = display_width - 2*_offset_x - 2;
 uint8_t plot_height = display_height - 2*_offset_y -2;
-
+uint8_t last_dot_x, last_dot_y;
+uint8_t current_dot_x, current_dot_y;
 
 void display_frame(){
 
@@ -88,6 +89,26 @@ void display_frame(){
     }
     ST7735_DrawString(1, 12, buf, ST7735_WHITE);
 
+
+    //voltage per division
+    temp = 0;
+    for(temp = 0; temp < 15; temp++){
+        buf[temp] = 0;
+    }
+    switch(divider){
+    case 0:
+        ST7735_DrawString(15, 12, "0.825V/Div", ST7735_WHITE);
+        break;
+    case 1:
+        ST7735_DrawString(15, 12, "1.2V/Div  ", ST7735_WHITE);
+        break;
+    case 2:
+        ST7735_DrawString(15, 12, "3.75V/Div ", ST7735_WHITE);
+        break;
+    default:
+        break;
+    }
+
     //samples/s
     temp = 0;
     for(temp = 0; temp < 15; temp++){
@@ -120,6 +141,7 @@ void display_frame(){
 
 void display_chart()
 {
+    last_dot_x = last_dot_y = 0;
     uint8_t current_pix= 0;
     uint8_t samples_to_use = 0;
     uint16_t used_samples = 0;
@@ -194,8 +216,16 @@ void display_chart()
             if(display_method == PP){
                 ST7735_DrawFastVLine(current_pix + _offset_x + 1, 109 - (uint8_t)(tpeak * 112 /256) + _offset_y, (tpeak - lpeak)*112/256, ST7735_Color565(0, 100, 100));
             }
+            current_dot_x = current_pix + _offset_x + 1;
+            current_dot_y = 109 - (uint8_t)(avg * 112.0 / 256) + _offset_y;
+            ST7735_DrawPixel(current_dot_x, current_dot_y, ST7735_Color565(0, 255, 255));
 
-            ST7735_DrawPixel(current_pix + _offset_x + 1, 109 - (uint8_t)(avg * 112.0 / 256) + _offset_y, ST7735_Color565(0, 255, 255));
+
+            if(interpolationmethod == LINEAR && current_pix > 0){
+                ST7735_Drawline(last_dot_x, last_dot_y, current_dot_x, current_dot_y, ST7735_Color565(0, 255, 255));
+            }
+            last_dot_x = current_dot_x;
+            last_dot_y = current_dot_y;
         }
 
     }
@@ -292,6 +322,28 @@ void display_update_frame()
         strcpy(buf + temp, " us/Div");
     }
     ST7735_DrawString(1, 12, buf, ST7735_WHITE);
+
+
+    //voltage per division
+    temp = 0;
+    for(temp = 0; temp < 15; temp++){
+        buf[temp] = 0;
+    }
+    switch(divider){
+    case 0:
+        ST7735_DrawString(15, 12, "0.825V/Div", ST7735_WHITE);
+        break;
+    case 1:
+        ST7735_DrawString(15, 12, "1.2V/Div  ", ST7735_WHITE);
+        break;
+    case 2:
+        ST7735_DrawString(15, 12, "3.75V/Div ", ST7735_WHITE);
+        break;
+    default:
+        break;
+
+
+    }
 
     //samples/s
     temp = 0;

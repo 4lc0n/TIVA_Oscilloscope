@@ -20,12 +20,14 @@ Source/adc.obj: /opt/tivaware/inc/hw_types.h
 Source/adc.obj: /opt/tivaware/inc/hw_gpio.h
 Source/adc.obj: /opt/tivaware/inc/hw_adc.h
 Source/adc.obj: /opt/tivaware/inc/hw_udma.h
+Source/adc.obj: /opt/tivaware/driverlib/pin_map.h
 Source/adc.obj: /opt/tivaware/driverlib/sysctl.h
 Source/adc.obj: /opt/tivaware/driverlib/gpio.h
 Source/adc.obj: /opt/tivaware/driverlib/rom.h
 Source/adc.obj: /opt/tivaware/driverlib/adc.h
 Source/adc.obj: /opt/tivaware/driverlib/interrupt.h
 Source/adc.obj: /opt/tivaware/driverlib/udma.h
+Source/adc.obj: /opt/tivaware/driverlib/pwm.h
 Source/adc.obj: ../Source/fifo.h
 Source/adc.obj: /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdlib.h
 Source/adc.obj: ../Source/main.h
@@ -56,12 +58,14 @@ Source/adc.obj: ../Source/timer.h
 /opt/tivaware/inc/hw_gpio.h: 
 /opt/tivaware/inc/hw_adc.h: 
 /opt/tivaware/inc/hw_udma.h: 
+/opt/tivaware/driverlib/pin_map.h: 
 /opt/tivaware/driverlib/sysctl.h: 
 /opt/tivaware/driverlib/gpio.h: 
 /opt/tivaware/driverlib/rom.h: 
 /opt/tivaware/driverlib/adc.h: 
 /opt/tivaware/driverlib/interrupt.h: 
 /opt/tivaware/driverlib/udma.h: 
+/opt/tivaware/driverlib/pwm.h: 
 ../Source/fifo.h: 
 /home/h2l/Downloads/ccstudio/src/installdir/opt/ccstudio/ccs/tools/compiler/ti-cgt-arm_20.2.0.LTS/include/stdlib.h: 
 ../Source/main.h: 

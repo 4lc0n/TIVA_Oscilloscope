@@ -19,12 +19,15 @@
 #include "inc/hw_gpio.h"
 #include "inc/hw_adc.h"
 #include "inc/hw_udma.h"
+#include "driverlib/pin_map.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 #include "driverlib/rom.h"
 #include "driverlib/adc.h"
 #include "driverlib/interrupt.h"
 #include "driverlib/udma.h"
+#include "driverlib/pwm.h"
+
 
 #include "fifo.h"
 #include "main.h"
@@ -372,7 +375,7 @@ bool sample_user_input()
     ADCSequenceDataGet(ADC1_BASE, 0, &ui32_adc_data);
 
     //make it stepped so no deadband is needed to display values near edge
-    samples_horizontal_offset = (ui32_adc_data>>2) & (0xFFC0);
+    samples_horizontal_offset = (ui32_adc_data>>2) & (0xFFF0);
     if(last_horizontal_offset != samples_horizontal_offset){
         last_horizontal_offset = samples_horizontal_offset;
         return true;
@@ -412,4 +415,35 @@ void set_ac_coupling(bool state)
     else{
         ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, 0);
     }
+}
+
+
+void adc_init_trigger_gen()
+{
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM1);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
+
+    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_PWM1))
+    {
+        ;
+    }
+
+    PWMGenConfigure(PWM1_BASE, PWM_GEN_1, PWM_GEN_MODE_DOWN);
+
+    ROM_GPIOPinTypePWM(GPIO_PORTE_BASE, GPIO_PIN_4);
+    ROM_GPIOPinConfigure(GPIO_PE4_M1PWM2);
+    SysCtlPWMClockSet(SYSCTL_PWMDIV_1);
+    //set pwm freqency to 10kHz: 80MHz / 10kHz = 8000;
+    PWMGenPeriodSet(PWM1_BASE, PWM_GEN_1, 8000);
+
+    ROM_PWMPulseWidthSet(PWM1_BASE, PWM_OUT_2, 8000 / 256 * trigger_voltage);
+
+    ROM_PWMGenEnable(PWM1_BASE, PWM_GEN_1);
+    ROM_PWMOutputState(PWM1_BASE, PWM_OUT_2_BIT, true);
+
+}
+
+void adc_set_trigger_gen(uint8_t level)
+{
+    ROM_PWMPulseWidthSet(PWM1_BASE, PWM_OUT_2, 8000 / 256 * level);
 }

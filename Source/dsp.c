@@ -39,7 +39,7 @@ float get_mean(){
     uint16_t i;
     for(i = 1023; i != 0; i--)
     {
-        mean += processing_buffer[i];
+        if(processing_buffer[i] != 0)mean += processing_buffer[i];
     }
 
     mean /= 2*BUFFER_SIZE;
@@ -59,11 +59,11 @@ uint8_t get_peak_to_peak()
     {
        if(processing_buffer[i] > high)
        {
-           high = processing_buffer[i];
+           if(processing_buffer[i] != 0)high = processing_buffer[i];
        }
        if(processing_buffer[i] < low)
        {
-           low = processing_buffer[i];
+           if(processing_buffer[i] != 0)low = processing_buffer[i];
        }
     }
     return high - low;

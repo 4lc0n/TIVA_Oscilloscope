@@ -31,9 +31,9 @@
 #include "ST7735.h"
 #include "display.h"
 #include "adc.h"
+#include "helper_fkt.h"
 
-
-#define MENU_ROWS 6
+#define MENU_ROWS 7
 
 //#define INVERT_ROTARY_ENCODER
 
@@ -44,6 +44,7 @@ extern uint32_t available_frequencies[7];
 extern volatile uint32_t trigger_frequency;
 extern uint32_t sys_time;
 extern volatile enum edge trigger_edge;
+extern volatile uint8_t trigger_voltage;
 extern uint32_t samples_per_division;
 extern bool show_measurements;
 extern uint8_t divider;
@@ -57,6 +58,8 @@ uint32_t menu_refresh = 0;
 char trig_string[3][8] = {"Rising", "Falling", "Any"};
 char bool_string[2][6] = {"false", " true"};
 char atten_string[3][4] = {"2:1", "3:1", "9:1"};
+
+float trigger_voltage_setpoint =0;
 
 
 void ui_init()
@@ -251,7 +254,71 @@ uint8_t ui_update()
 
             }
             break;
+
+            //trigger voltage
         case 5:
+            if(menu_column){    //second column: change status
+
+                if(rotary_count){
+                    trigger_voltage_setpoint += 0.1 * rotary_count;
+                    switch(divider){
+                    case 0:
+                        //max. +- 3.3V
+                        if(trigger_voltage_setpoint < -3.3)trigger_voltage_setpoint = -3.3;
+                        else if(trigger_voltage_setpoint > 3.3)trigger_voltage_setpoint = 3.3;
+                        break;
+                    case 1:
+                        //max. +- 3.3V
+                        if(trigger_voltage_setpoint < -5.0)trigger_voltage_setpoint = -5.0;
+                        else if(trigger_voltage_setpoint > 5.0)trigger_voltage_setpoint = 5.0;
+                        break;
+                    case 2:
+                        //max. +- 3.3V
+                        if(trigger_voltage_setpoint < -15.0)trigger_voltage_setpoint = -15.0;
+                        else if(trigger_voltage_setpoint > 15.0)trigger_voltage_setpoint = 15.0;
+                        break;
+                    default:
+                        break;
+                    }
+
+
+
+
+                }
+
+                else if(button_count){  //exit edit row: save changes
+
+                    menu_column= 0;
+                    switch(divider){
+                    case 0:
+                        trigger_voltage = (unsigned int)(trigger_voltage_setpoint / 3.3*128.0) + 128;
+                        break;
+                    case 1:
+                        trigger_voltage = (unsigned int)(trigger_voltage_setpoint / 5.0*128.0) + 128;
+                        break;
+                    case 2:
+                        trigger_voltage = (unsigned int)(trigger_voltage_setpoint / 15*128.0) + 128;
+                        break;
+                    default:
+                        break;
+                    }
+                    adc_set_trigger_gen(trigger_voltage);
+                }
+            }
+            else{
+                //first column:
+                //go to next row
+                if(rotary_count){
+                    menu_row = ((menu_row + rotary_count)) % MENU_ROWS;
+                }
+                //go to setting
+                else if(button_count){
+                    menu_column = 1;
+                }
+
+            }
+            break;
+        case 6:
             //back button
             //go to next row
             if(rotary_count){
@@ -268,6 +335,10 @@ uint8_t ui_update()
                 button_count = 0;
                 menu_refresh = 0;
             }
+            break;
+        default:
+            menu_column = 0;
+            menu_row = 0;
             break;
 
         }
@@ -329,6 +400,30 @@ uint8_t ui_update()
         ST7735_OutString("    ");
 
         ST7735_SetCursor(6, 9);
+        ST7735_OutString(" TriV");
+        ST7735_SetCursor(12, 9);
+        ST7735_OutString(" ");
+
+        float volt_copy = trigger_voltage_setpoint;
+        if(trigger_voltage_setpoint < 0){
+            ST7735_OutString("-");
+            volt_copy*= -1;
+        }
+        uint8_t temp=0;
+        char buf[15] = {0};
+        temp = 0;
+        for(temp = 0; temp < 15; temp++){
+            buf[temp] = 0;
+        }
+        temp = 0;
+        ftoa(volt_copy, buf, 2);
+        while(buf[temp] != 0){
+            temp++;
+        }
+        strcpy(buf + temp, "V ");
+        ST7735_OutString(buf);
+
+        ST7735_SetCursor(6, 10);
         ST7735_OutString(" BACK");
 
         //print cursor

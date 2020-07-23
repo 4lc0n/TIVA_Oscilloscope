@@ -23,6 +23,8 @@ void GPIOBIntHandler(void);
 void uDMA_config_primary();
 void uDMA_config_secondary();
 
+void adc_init_trigger_gen();
+void adc_set_trigger_gen(uint8_t level);
 
 bool sample_user_input();
 

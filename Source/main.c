@@ -22,7 +22,7 @@
  *      Interrupt Priority: 0
  *  ADC_Trigger_Detected -> PB1
  *      Interrupt Priority: 1
- *  ADC_Trigger_Voltage ->
+ *  ADC_Trigger_Voltage -> PE4, M1PWM2
  *
  *  --Rotary encoder
  *  A -> PD1
@@ -100,11 +100,11 @@
     uint8_t processing_buffer[1024] = {0};              //puffer für darstellung, signalverarbeitung, nachbereitung, fft etc...
 
     volatile enum status triggerstatus= IDLE;           //state variable für aktuellen status (wird in SIR aktualisiert)
-    volatile uint8_t trigger_voltage = 112;             //triggerspannung (als 8bit adc wert)
+    volatile uint8_t trigger_voltage = 128;             //triggerspannung (als 8bit adc wert)
     volatile enum edge trigger_edge = RISING;           //trigger-edge (RISING, FALLING, ANY)
     volatile uint32_t prebuffer_filling = 0;            //für ISR, um zuerst prebuffer zu füllen, dann erst triggerung erlauben
 
-    volatile uint32_t trigger_frequency = 20000;        //trigger / timer frequenz, sollte 100.000 nicht überschreiten (isr-zeiten)
+    volatile uint32_t trigger_frequency = 100000;        //trigger / timer frequenz, sollte 100.000 nicht überschreiten (isr-zeiten)
     uint32_t available_frequencies[11] = {100, 500, 1000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000};
     bool show_measurements = true;
     uint8_t divider = 0;
@@ -114,12 +114,13 @@
     volatile uint16_t samples_horizontal_offset = 0;
 
     volatile enum display_variant display_method = PP;  //für darstellung (avg wird immer dargestellt, bei pp schwach dargestellte maximawerte
-    volatile enum interpolation_variant interpolationmethod = DOT; //hat aktuell keinen effekt (LINEAR, SINC, DOT)
+    volatile enum interpolation_variant interpolationmethod = DOT;
 
     volatile uint32_t sys_time = 0;                     //für systick, inc alle 10ms
 
 
-int main(void){
+
+    int main(void){
 
     ROM_SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);   //run at 80MHz
     ROM_FPUEnable();                                                                          //enable Floating Point Unit
@@ -153,6 +154,8 @@ int main(void){
 
    //init adc
     adc_init();
+    //init pwm block for trigger voltage generator
+    adc_init_trigger_gen();
     SysCtlDelay(300000);
 
 

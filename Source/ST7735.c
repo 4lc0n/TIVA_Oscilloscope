@@ -90,6 +90,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <math.h>
 #include "ST7735.h"
 #include "inc/tm4c123gh6pm.h"
 
@@ -1220,6 +1222,42 @@ void ST7735_OutUDec(uint32_t n){
 }
 
 
+//------------------------ST7735_Drawline----------------------
+//eigens implementiert:
+// eingabe: xende, yende, xanfang, yanfang
+void ST7735_Drawline(uint16_t xa, uint16_t ya, uint16_t xe, uint16_t ye, uint16_t color)
+{
+    float m = (float)(ye - ya)/(float)(xe - xa); // steigung berechnen
+    uint8_t delta_x = 0, delta_y = 0;
+    uint8_t i = 0;
+    int8_t signX = 1, signY = 1;
+
+    if( xa > xe){
+        signX = -1;
+    }
+    if(ya > ye){
+        signY = -1;
+    }
+    delta_x = abs(xe - xa);
+    delta_y = abs(ye - xa);
+
+    if(m <= 1){
+        for(i = 0; i <= delta_x; i++){
+            ST7735_DrawPixel(ceil((xa*1.0) + i*signX), ceil((ya*1.0) + i*m*signY), color);
+
+        }
+    }
+    else{
+        for(i = 0; i <= delta_y; i++){
+            ST7735_DrawPixel(ceil((xa*1.0) + i / m * signX), ceil((ya*1.0) + i * signY), color);
+
+        }
+    }
+
+
+
+
+}
 
 
 
