@@ -30,6 +30,8 @@
 #define UART_SUCCESS 1
 #define UART_FAIL 0
 
+
+//initializes uart0 on gpioa pin 0 and 1 in 8N1 mode and 115200 baudrate
 void uart_init(uint32_t baud)
 {
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
@@ -49,11 +51,15 @@ void uart_init(uint32_t baud)
     ROM_IntEnable(INT_UART0);
     ROM_UARTIntEnable(UART0_BASE, UART_INT_RX | UART_INT_RT);
 }
+
+//update baudrate
 void uart_set_baud(uint32_t baud){
     ROM_UARTConfigSetExpClk(UART0_BASE, ROM_SysCtlClockGet(), baud, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
 
 }
 
+//puts char to uart0
+//returns success state
 uint8_t uart_put_c(char c)
 {
     while(ROM_UARTBusy(UART0_BASE));
@@ -62,6 +68,9 @@ uint8_t uart_put_c(char c)
     }
     else return UART_FAIL;
 }
+
+//puts zero-terminating string to uart0
+//returns success state
 uint8_t uart_put_s(char *p)
 {
     uint8_t count = 0;
@@ -77,6 +86,8 @@ uint8_t uart_put_s(char *p)
     return count;
 }
 
+//puts signed integer to uart0
+//returns success state
 uint8_t uart_put_int(int i)
 {
     char buf[10] = {0};
@@ -91,6 +102,9 @@ uint8_t uart_put_int(int i)
     else return UART_FAIL;
 
 }
+
+//puts unsigned int to uart0
+//returns success state
 uint8_t uart_put_uint(uint32_t ui)
 {
     char buf[10] = {0};
@@ -101,6 +115,8 @@ uint8_t uart_put_uint(uint32_t ui)
     else return UART_FAIL;
 }
 
+//puts float with x precision to uart0
+//returns success state
 uint8_t uart_put_float(float f, uint8_t decimal)
 {
     char buf[10] = {0};
@@ -112,6 +128,8 @@ uint8_t uart_put_float(float f, uint8_t decimal)
 
 }
 
+//uart-receiver handler
+//does nothing but clearing the interrupt
 void UART0RXIntHandler()
 {
     uint32_t ui32Status;

@@ -9,8 +9,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-//wird abgeändert, dass
 
+//writes data into buffer
+//returns success state (if buffer is not full)
 uint8_t BufferIn(struct Buffer *b, uint8_t byte)
 {
   uint16_t next = ((b->write + 1) & BUFFER_MASK);
@@ -25,7 +26,8 @@ uint8_t BufferIn(struct Buffer *b, uint8_t byte)
   return BUFFER_SUCCESS;
 }
 
-
+//writes data into buffer
+//overwrites value if buffer is full
 void BufferOverwriteIn(struct Buffer *b, uint8_t byte)
 {
   uint16_t next = ((b->write + 1) & BUFFER_MASK);
@@ -41,7 +43,8 @@ void BufferOverwriteIn(struct Buffer *b, uint8_t byte)
 }
 
 
-
+//puts current buffer value into pByte
+//returns success state
 uint8_t BufferOut(struct Buffer *b, uint8_t *pByte)
 {
   if (b->read == b->write)

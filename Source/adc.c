@@ -113,52 +113,6 @@ void adc_init(){
     uDMAChannelEnable(UDMA_CHANNEL_ADC0); // Enables DMA channel so it can perform transfers
 
 
-//    ROM_ADCSequenceDisable(ADC0_BASE, 0);
-//                                                                                        //changed sequencer from 1 to 0 -> 8 Byte FIFO!
-//    ROM_ADCSequenceConfigure(ADC0_BASE, 0, ADC_TRIGGER_TIMER, 0);                       //enable adc0 with sequence 1 and processor trigger, highest priority
-//    ROM_ADCSequenceStepConfigure(ADC0_BASE,0,0,ADC_CTL_CH10|ADC_CTL_IE|ADC_CTL_END);     //     //configure to sample ADC Channel 10 and end conversion (interrupt when fifo is half full (4 Bytes)
-//
-//    ROM_ADCIntClear(ADC0_BASE, 0);
-//    ROM_ADCIntEnable(ADC0_BASE, 0);
-////    ADCSequenceDMAEnable(ADC0_BASE, 0);
-//
-//
-////    ADCIntEnableEx(ADC0_BASE, ADC_INT_DMA_SS0);                                                         //enable Interrupt to be sent to NVIC
-//
-//    ADCSequenceEnable(ADC0_BASE, 0);
-//
-//    IntPrioritySet(INT_ADC0SS0, 0);
-//    IntEnable(INT_ADC0SS0);
-
-//    //configure µDMA for faster sampling rate
-//    ROM_SysCtlPeripheralEnable( SYSCTL_PERIPH_UDMA);
-//    while(!ROM_SysCtlPeripheralReady(SYSCTL_PERIPH_UDMA));
-//    uDMAEnable();
-//
-//    uDMAControlBaseSet(DMA_Control_Table);
-//
-//    ROM_ADCSequenceEnable(ADC0_BASE, 0);                                                    //enable sequencer 1
-//
-//    // Put the attributes in a known state.  These should already be disabled by default.
-//    uDMAChannelAttributeDisable( UDMA_CHANNEL_ADC0, UDMA_ATTR_ALTSELECT |UDMA_ATTR_USEBURST | UDMA_ATTR_HIGH_PRIORITY | UDMA_ATTR_REQMASK );
-//    // Set the USEBURST attribute. This is somewhat more efficient bus usage than the default which
-//    // allows single or burst transfers.
-//    uDMAChannelAttributeEnable( UDMA_CHANNEL_ADC0, UDMA_ATTR_USEBURST );
-//
-//    uDMAChannelControlSet( UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_ARB_1 | UDMA_DST_INC_16 );
-//
-//    uDMAChannelControlSet( UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT, UDMA_SIZE_16 | UDMA_SRC_INC_NONE | UDMA_ARB_1 | UDMA_DST_INC_16 );
-//
-////      uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_MODE_PINGPONG, (void *) (ADC0_BASE + ADC_O_SSFIFO0), BufferA, 64);
-//    uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_PRI_SELECT, UDMA_MODE_PINGPONG, (void *) (ADC0_SSFIFO0_R), &BufferA, 64 ); //ADC0_SSFIFO0_R
-//
-//    uDMAChannelTransferSet(UDMA_CHANNEL_ADC0 | UDMA_ALT_SELECT, UDMA_MODE_PINGPONG, (void *) (ADC0_SSFIFO0_R), &BufferB, 64 );
-//
-//
-//    ROM_uDMAChannelEnable(UDMA_CHANNEL_ADC0);
-
-
-
 
     //configure trigger input pin with pin change interrupt
     //enable interrupt for GPIOD Pin 1, 2, 3
@@ -199,6 +153,7 @@ void adc_prepare(){
     triggerstatus = IDLE;
     prebuffer_filling = 0;
     IntEnable(INT_GPIOB);
+    //prepare µDMA, main and alternate mode for ping pong mode
     uDMAChannelAttributeDisable(UDMA_CHANNEL_ADC0, UDMA_ATTR_ALTSELECT | UDMA_ATTR_HIGH_PRIORITY | UDMA_ATTR_REQMASK);
 
     uDMAChannelAttributeEnable(UDMA_CHANNEL_ADC0, UDMA_ATTR_USEBURST);
@@ -270,35 +225,6 @@ void ADC0IntHandler(void){
         }
     }
 
-
-
-
-//    uint32_t ui32ADC0Raw = 0;
-//    //uint32_t ui32ADCAvg = 0;
-//    uint8_t ui8data;
-//    //get value from buffer:
-//    ROM_ADCSequenceDataGet(ADC0_BASE, 0, &ui32ADC0Raw);
-//
-//
-//    ui8data = (uint8_t)(ui32ADC0Raw >>4);
-//
-//
-//    // if prebuffer not full: fill prebuffer
-//    if(triggerstatus == PREBUFFERING){
-//       prebuffer_filling++;
-//
-//
-//       GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
-//       BufferOverwriteIn(&preBuffer, ui8data);
-//    }
-//    else{
-//       GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
-//
-//       if(!BufferIn(&postBuffer, ui8data)){
-//           triggerstatus = IDLE;
-//           timer_deactivate();
-//       }
-//    }
     GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2 | GPIO_PIN_3, 0x00);
 
 }
@@ -351,7 +277,7 @@ bool sample_user_input()
 {
     static uint32_t last_horizontal_offset = 0;
     uint32_t ui32_adc_data;
-    //Prepare ADC1 for sampling potentiometer on Pin XXX
+    //Prepare ADC1 for sampling potentiometer on Pin D0
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC1);                                         //enable ADC clock
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
 
@@ -395,7 +321,7 @@ void set_attenuator(uint8_t divider_setting)
         ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5|GPIO_PIN_6, GPIO_PIN_5);
         break;
     case 2:
-        ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5|GPIO_PIN_6, GPIO_PIN_5 | GPIO_PIN_6);
+        ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5|GPIO_PIN_6, 0);
         break;
     default:
         ROM_GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_5|GPIO_PIN_6, 0);

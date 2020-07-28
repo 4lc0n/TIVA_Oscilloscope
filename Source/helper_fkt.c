@@ -72,7 +72,7 @@ void ftoa(float n, char* res, int afterpoint)
 }
 
 
-
+//simple implementation of stdlib-function
 void strcpy(char *dest, char *src)
 {
     while(*src != 0){

@@ -22,7 +22,7 @@
 
 extern volatile enum status triggerstatus;
 
-
+//configures timer 0A for triggering adc conversion
 void timer_init(){
     //enable timer
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
@@ -47,12 +47,15 @@ void timer_init(){
 
 }
 
+//sets frequency for TIMER0A, independent from cpu-freq
 void timer_set_frequency(uint32_t frequency){
     if(triggerstatus == IDLE){
         uint32_t ui32Period = (SysCtlClockGet() / frequency );
         ROM_TimerLoadSet(TIMER0_BASE, TIMER_A, ui32Period);
     }
 }
+
+//activates timer to trigger adc conversion, set triggerstatus to prebuffering
 void timer_activate(){
     //start timer
     if(triggerstatus == IDLE){
@@ -60,6 +63,8 @@ void timer_activate(){
         triggerstatus =PREBUFFERING;
     }
 }
+
+//deactivates timer 0A
 void timer_deactivate(){
     ROM_TimerDisable(TIMER0_BASE, TIMER_A);
 

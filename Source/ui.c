@@ -61,7 +61,7 @@ char atten_string[3][4] = {"2:1", "3:1", "9:1"};
 
 float trigger_voltage_setpoint =0;
 
-
+//initialize the user interface by initializing the input pins
 void ui_init()
 {
     //enable interrupt for GPIOD Pin 1, 2, 3
@@ -102,6 +102,8 @@ void ui_init()
     GPIOPadConfigSet(GPIO_PORTF_BASE,GPIO_PIN_0 | GPIO_PIN_4, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
 
 }
+
+//updates the ui if a action is required (button was pressed)
 uint8_t ui_update()
 {
     if(menu_level == 0 && button_count){

@@ -19,7 +19,7 @@ extern uint8_t processing_buffer[1024];      //puffer für darstellung, signalve
 
 
 
-
+//dump data from fifo buffers in processing buffer for easy access
 void get_data(){
 
     uint16_t temp1, temp2 = 0;
@@ -34,6 +34,8 @@ void get_data(){
 
 }
 
+// U_mean = 1 / T * integral from 0 to T u(t)dt
+//return as float as a avg of raw value (no conversion)
 float get_mean(){
     float mean = 0;
     uint16_t i;
@@ -49,7 +51,8 @@ float get_mean(){
 }
 
 
-
+//loop over buffer and pick highest and lowest value
+//return as raw value
 uint8_t get_peak_to_peak()
 {
     //assign to a value for first data reference
@@ -70,6 +73,9 @@ uint8_t get_peak_to_peak()
 
 }
 
+
+//loop over buffer, return highest value
+//return raw value
 uint8_t get_highest()
 {
     uint16_t i;
@@ -83,6 +89,9 @@ uint8_t get_highest()
         }
     return high;
 }
+
+//loop over buffer, return lowest value
+//return raw value
 uint8_t get_lowest()
 {
     uint16_t i;
