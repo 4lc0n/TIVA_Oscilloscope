@@ -1,6 +1,10 @@
 # TIVA-Oszilloskop 
 ## Semesterarbeit Jürgen Markl MT2 SS 2020
 
+<p align="center">
+  <img src="DSCN7883.JPG" width="350" title"Prototyp auf Lochrasterplatine">
+</p>
+
 ### Über dieses Projekt
 Dieses Projekt ist als Semesterarbeit im Fach Messtechnik 2 im Sommersemester 2020 entstanden. 
 Es wurde mithilfe des Tiva Lauchpad, genauer dem TM4C123GXL Development Board ein Budget-Oszilloskop nach dem Vorbild des DSO138 entwickelt, welches eine Abtastrate von 1MSample/s und eine analoge Bandbreite von 75kHz aufweist. 
